@@ -3,6 +3,7 @@ neuron poker
 
 Usage:
   main.py random [options]
+  main.py ai_vs_random --ai_num=<> [options]
   main.py keypress [options]
   main.py consider_equity [options]
   main.py equity_improvement --improvement_rounds=<> [options]
@@ -25,6 +26,7 @@ import logging
 import numpy as np
 import pandas as pd
 from docopt import docopt
+import random
 
 import gym
 from agents.agent_consider_equity import Player as EquityPlayer
@@ -32,6 +34,7 @@ from agents.agent_keras_rl_dqn import Player as DQNPlayer
 from agents.agent_keypress import Player as KeyPressAgent
 from agents.agent_random import Player as RandomPlayer
 from agents.agent_custom_q1 import Player as Custom_Q1
+from agents.agent_custom_ai import Player as Custom_AI
 from gym_env.env import PlayerShell
 from tools.helper import get_config
 from tools.helper import init_logger
@@ -59,6 +62,10 @@ def command_line_parser():
 
     if args['random']:
         runner.random_agents()
+
+    elif args['ai_vs_random']:
+        ai_num = int(args['--ai_num'])
+        runner.ai_vs_random(ai_num)
 
     elif args['keypress']:
         runner.key_press_agents()
@@ -101,6 +108,29 @@ class Runner:
         self.env = gym.make(env_name, initial_stacks=stack, render=self.render)
         for _ in range(num_of_plrs):
             player = RandomPlayer()
+            self.env.add_player(player)
+
+        self.env.reset()
+
+    def ai_vs_random(self, ai_num):
+        """
+        Created by Xue Hongyan
+        Create an environment with provided number of ai players and random players
+        """
+        env_name = 'neuron_poker-v0'
+        stack = 500
+        num_of_plrs = 6
+        self.env = gym.make(env_name, initial_stacks=stack, render=self.render)
+        player_pool = []
+        for _ in range(ai_num):
+            player = Custom_AI(env=self.env)
+            player_pool.append(player)
+        for _ in range(num_of_plrs-ai_num):
+            player = RandomPlayer()
+            player_pool.append(player)
+
+        random.shuffle(player_pool)
+        for player in player_pool:
             self.env.add_player(player)
 
         self.env.reset()
