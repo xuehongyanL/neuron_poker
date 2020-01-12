@@ -30,52 +30,19 @@ int amount(Action act,Observation* obs){
     }
 }
 
-double tightFactor(Observation* obs){
-    double ret=1.0;
-    for(int i=0;i<obs->numPlayers;i++){
-        if(obs->stages[obs->currStage].contribution[i]>0 && obs->stack[i]==0){
-            if(obs->stack[obs->position]>1500){
-                ret*=0.5;
-            }else if(obs->stack[obs->position]>750){
-                ret*=0.75;
-            }else if(obs->stack[obs->position]>450){
-                ret*=0.85;
-            }
-            if(obs->stack[obs->position]<150){
-                ret*=2;
-            }else if(obs->stack[obs->position]<300){
-                ret*=1.5;
-            }else if(obs->stack[obs->position]<450){
-                ret*=1.25;
-            }
-        }
-    }
-    /*int stackSum=0;
-    int aliveSum=0;
-    for(int i=0;i<obs->numPlayers;i++){
-        stackSum+=obs->stack[i];
-        if(obs->stages[obs->currStage].folds[i]==0 && obs->stack[i]>0) aliveSum++;
-    }
-    int stackAvg=stackSum/aliveSum;
-    ret*=log((double)stackAvg)/log((double)(obs->stack[obs->position]));*/
-    return ret;
-}
-
 Action decision(double prob1v1,Observation* obs){
-    double prob=prob1v1;
+    double prob=sqrt(sqrt(sqrt(prob1v1+0.02)));
     int oppos=0;
     for(int i=0;i<obs->numPlayers;i++){
         if(obs->stages[obs->currStage].folds[i]==0 && alive(i,obs)) oppos++;
     }
-    for(int i=0;i<oppos/2;i++) prob*=prob1v1;
-    prob*=tightFactor(obs);
-    int pool=obs->communityPot+obs->roundPot;
 
+    int pool=obs->communityPot+obs->roundPot+(oppos-1)*amount(CALL,obs);
     Action finalAction=(obs->legalMoves[CHECK])?CHECK:FOLD;
     double finalExpect=0.0;
     for(int choice=(int)CALL;choice<=(int)ALL_IN;choice++){
         if(obs->legalMoves[choice]==0) continue;
-        double expect=prob*pool+(1.0-prob)*amount((Action)choice,obs);;
+        double expect=prob*pool-(1.0-prob)*amount((Action)choice,obs);
         if(expect>finalExpect){
             finalAction=(Action)choice;
             finalExpect=expect;

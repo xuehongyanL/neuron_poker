@@ -16,7 +16,7 @@ AI的主体部分是一个动态库，用C++编写。
 
 所有C++代码位于neuron_poker\ai目录，用Makefile组织。
 
-agent的python代码位于neuron_poker\agents\agent_custom_ai.py。
+agent的python代码位于neuron_poker\agents\agent\_custom\_ai.py。
 
 AI与随机agent对局的环境在neuron_poker\main.py中有所修改。
 
@@ -28,7 +28,7 @@ AI与随机agent对局的环境在neuron_poker\main.py中有所修改。
 
 进入neuron_poker\ai目录，根据操作系统执行'make windows'或'make linux'，确保当前目录出现了'ai.dll'(Win)或'ai.so'(Linux)。
 
-然后回到项目根目录，执行'python3 main.py ai_vs_random --ai_num=X'，其中'X'是随机agent的个数，可以取1到6。
+然后回到项目根目录，执行'python3 main.py ai\_vs\_random --ai_num=X'，其中'X'是随机agent的个数，可以取1到6。
 
 ## 致谢
 
