@@ -175,7 +175,7 @@ class Player:
         #print(self.choice)
         if action == Action.FOLD:
             self.fold=1
-        print(self.weight)
+        # print(self.weight)
         self.previous_stage=stage_a
         #print(self.previous_stage)
         return action

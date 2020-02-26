@@ -124,7 +124,7 @@ class Player:
         position = info['player_data']['position']
 
         stage_a = info['community_data']['stage'].index(1)
-        print(stage_a)
+        # print(stage_a)
         assert 0 <= stage_a < 4
         stack_a = info['player_data']['stack'][position]
 
@@ -149,11 +149,8 @@ class Player:
         action_int = round(action_b / sum)
         action = self.int_to_action(action_int)
         while action not in action_space:
-            #print(f'Wrong action: {action}')
-            action_int -= 1
-            action = self.int_to_action(action_int)
-            # action = self.int_to_action(action_a[8])
-            # i = i + 1
+            action = sorted(list(action_space),key=lambda x:abs(self.action_to_int(x)-action_int))[0]
+
         self.actions.append(action)
         action_int = self.action_to_int(action)
         List = []
