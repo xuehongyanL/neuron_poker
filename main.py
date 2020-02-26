@@ -4,6 +4,7 @@ neuron poker
 Usage:
   main.py random [options]
   main.py ai_vs_random --ai_num=<> [options]
+  main.py bench [options]
   main.py keypress [options]
   main.py consider_equity [options]
   main.py equity_improvement --improvement_rounds=<> [options]
@@ -35,6 +36,8 @@ from agents.agent_keypress import Player as KeyPressAgent
 from agents.agent_random import Player as RandomPlayer
 from agents.agent_custom_q1 import Player as Custom_Q1
 from agents.agent_custom_ai import Player as Custom_AI
+from agents.agent_equity_ensemble import Player as Custom_Ensemble
+from agents.agent_equity_ensemble_ex import Player as Custom_Ensemble_EX
 from gym_env.env import PlayerShell
 from tools.helper import get_config
 from tools.helper import init_logger
@@ -66,6 +69,9 @@ def command_line_parser():
     elif args['ai_vs_random']:
         ai_num = int(args['--ai_num'])
         runner.ai_vs_random(ai_num)
+
+    elif args['bench']:
+        runner.bench()
 
     elif args['keypress']:
         runner.key_press_agents()
@@ -128,6 +134,35 @@ class Runner:
         for _ in range(num_of_plrs-ai_num):
             player = RandomPlayer()
             player_pool.append(player)
+
+        random.shuffle(player_pool)
+        for player in player_pool:
+            self.env.add_player(player)
+
+        self.env.reset()
+
+    def bench(self):
+        """
+        Created by Xue Hongyan
+        Game of Custom AIs
+        """
+        env_name = 'neuron_poker-v0'
+        stack = 500
+        num_of_plrs = 6
+        self.env = gym.make(env_name, initial_stacks=stack, render=self.render)
+        player_pool = []
+
+        # player_pool.append(Custom_AI(env=self.env))
+        # player_pool.append(Custom_AI(env=self.env))
+        # player_pool.append(Custom_AI(env=self.env))
+        player_pool.append(Custom_Ensemble())
+        player_pool.append(Custom_Ensemble())
+        player_pool.append(Custom_Ensemble())
+        player_pool.append(Custom_Ensemble_EX())
+        player_pool.append(Custom_Ensemble_EX())
+        player_pool.append(Custom_Ensemble_EX())
+        # player_pool.append(RandomPlayer())
+        # player_pool.append(RandomPlayer())
 
         random.shuffle(player_pool)
         for player in player_pool:
