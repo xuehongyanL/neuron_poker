@@ -35,9 +35,6 @@ from agents.agent_keras_rl_dqn import Player as DQNPlayer
 from agents.agent_keypress import Player as KeyPressAgent
 from agents.agent_random import Player as RandomPlayer
 from agents.agent_custom_q1 import Player as Custom_Q1
-from agents.agent_custom_ai import Player as Custom_AI
-from agents.agent_equity_ensemble import Player as Custom_Ensemble
-from agents.agent_equity_ensemble_ex import Player as Custom_Ensemble_EX
 from gym_env.env import PlayerShell
 from tools.helper import get_config
 from tools.helper import init_logger
@@ -141,33 +138,14 @@ class Runner:
 
         self.env.reset()
 
-    def bench(self):
-        """
-        Created by Xue Hongyan
-        Game of Custom AIs
-        """
+    def bench_interface(self, player_pool):
         env_name = 'neuron_poker-v0'
         stack = 500
         num_of_plrs = 6
         self.env = gym.make(env_name, initial_stacks=stack, render=self.render)
-        player_pool = []
-
-        # player_pool.append(Custom_AI(env=self.env))
-        # player_pool.append(Custom_AI(env=self.env))
-        # player_pool.append(Custom_AI(env=self.env))
-        player_pool.append(Custom_Ensemble())
-        player_pool.append(Custom_Ensemble())
-        player_pool.append(Custom_Ensemble())
-        player_pool.append(Custom_Ensemble_EX())
-        player_pool.append(Custom_Ensemble_EX())
-        player_pool.append(Custom_Ensemble_EX())
-        # player_pool.append(RandomPlayer())
-        # player_pool.append(RandomPlayer())
-
         random.shuffle(player_pool)
         for player in player_pool:
             self.env.add_player(player)
-
         self.env.reset()
 
     def key_press_agents(self):

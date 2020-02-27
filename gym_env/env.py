@@ -478,7 +478,7 @@ class HoldemTable(Env):
         winner_in_episodes.append(self.winner_ix)
         league_table = pd.Series(winner_in_episodes).value_counts()
         best_player = league_table.index[0]
-        self.best_player = self.players[best_player]
+        self.best_player = sorted(self.players,key=lambda x:x.stack)[-1]
 
         log.info(league_table)
         log.info(f"Best Player: {best_player}")
