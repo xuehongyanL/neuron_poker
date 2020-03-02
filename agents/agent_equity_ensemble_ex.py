@@ -2,13 +2,10 @@
 Modified by Xue Hongyan
 """
 from gym_env.env import Action
-import numpy as np
 
 autoplay = True  # play automatically if played against keras-rl
 
 # 弱学习器类
-
-
 class Learner:
     def __init__(self, params):  # 用一组固定参数初始化
         self.params = params
@@ -92,7 +89,6 @@ class Player:
                 return False
         else:
             return False
-        return False
 
     def updateWeight(self, newState):  # 更新权重 从[状态]中学习并更新到[权重]
         stack = newState['current_stack']

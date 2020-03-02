@@ -58,33 +58,6 @@ class PlayerData:
         self.stack = None
 
 
-class OppInfo:
-    """Opponents' information"""
-
-    def __init__(self, num_players):
-        self.num_players = num_players
-        self.is_newhand = [True] * num_players
-        self.small_blind = 0
-        self.big_blind = 0
-        self.alive_players = []
-        self.recent_action = [0] * num_players
-        self.last_action = [0] * num_players
-        self.lhand_cards = None
-        self.ltable_cards = None
-
-    def newhand_reset(self):
-        self.is_newhand = [True] * self.num_players
-        self.recent_action = [0] * self.num_players
-
-
-class Realtime:
-    """Realtime Information"""
-    def __init__(self):
-        self.stage = 0
-        self.position = 0
-        self.action = None
-
-
 class Action(Enum):
     """Allowed actions"""
 
@@ -168,7 +141,6 @@ class HoldemTable(Env):
         self.acting_agent = None
         self.funds_plot = funds_plot
         self.max_round_raising = max_raising_rounds
-        self.opp_info = None
 
         # pots
         self.community_pot = 0
@@ -187,7 +159,6 @@ class HoldemTable(Env):
         self.first_action_for_hand = None
 
         self.best_player = None
-        self.real_time = None
 
     def reset(self):
         """Reset after game over."""
@@ -203,9 +174,6 @@ class HoldemTable(Env):
 
         self.dealer_pos = 0
         self.player_cycle = PlayerCycle(self.players, dealer_idx=-1, max_steps_after_raiser=len(self.players))
-        self.opp_info = OppInfo(len(self.players))
-        self.real_time = Realtime()
-
         self._start_new_hand()
         self._get_environment()
         # auto play for agents where autoplay is set
@@ -253,30 +221,14 @@ class HoldemTable(Env):
                     self._calculate_reward(action)
 
             log.info(f"Previous action reward for seat {self.acting_agent}: {self.reward}")
-
         return self.array_everything, self.reward, self.done, self.info
 
     def _execute_step(self, action):
-        pos = self.current_player.seat
-
         self._process_decision(action)
-
-        self.opp_info.recent_action[pos] = self.action
-        self.real_time.stage = self.stage
-        self.real_time.position = pos
-        self.real_time.action = action
-        for players in self.players:
-            if hasattr(players.agent_obj, 'realtime'):
-                if players.agent_obj.realtime:
-                    players.agent_obj.rt(self.real_time, self.info)
-        self.opp_info.is_newhand[pos] = False
 
         self._next_player()
 
         if self.stage in [Stage.END_HIDDEN, Stage.SHOWDOWN]:
-            self.opp_info.lhand_cards = [player.cards for player in self.players]
-            self.opp_info.ltable_cards = self.table_cards
-            self.opp_info.last_action = self.opp_info.recent_action
             self._end_hand()
             self._start_new_hand()
 
@@ -316,7 +268,6 @@ class HoldemTable(Env):
             self.current_player = self.players[self.winner_ix]
 
         self.player_data.position = self.current_player.seat
-        #print(self.current_player.cards,self.table_cards)
         self.current_player.equity_alive = self.get_equity(set(self.current_player.cards), set(self.table_cards),
                                                            sum(self.player_cycle.alive), 10)
         self.player_data.equity_to_river_alive = self.current_player.equity_alive
@@ -331,13 +282,10 @@ class HoldemTable(Env):
         self.observation = self.array_everything
         self._get_legal_moves()
 
-        self.opp_info.alive_players = list(self.player_cycle.alive)
-
         self.info = {'player_data': self.player_data.__dict__,
                      'community_data': self.community_data.__dict__,
                      'stage_data': [stage.__dict__ for stage in self.stage_data],
-                     'legal_moves': self.legal_moves,
-                     'opp_information': self.opp_info.__dict__}
+                     'legal_moves': self.legal_moves}
 
         self.observation_space = self.array_everything.shape
 
@@ -451,7 +399,6 @@ class HoldemTable(Env):
             self.stage_data[rnd].contribution[pos] += contribution / (self.big_blind * 100)
             self.stage_data[rnd].stack_at_action[pos] = self.current_player.stack / (self.big_blind * 100)
 
-        self.action = action
         self.player_cycle.update_alive()
 
         log.info(
@@ -476,7 +423,6 @@ class HoldemTable(Env):
 
         # preflop round1,2, flop>: round 1,2, turn etc...
         self.stage_data = [StageData(len(self.players)) for _ in range(8)]
-        self.opp_info.newhand_reset()
 
         # pots
         self.community_pot = 0
@@ -536,7 +482,7 @@ class HoldemTable(Env):
         winner_in_episodes.append(self.winner_ix)
         league_table = pd.Series(winner_in_episodes).value_counts()
         best_player = league_table.index[0]
-        self.best_player = sorted(self.players, key=lambda x: x.stack)[-1]
+        self.best_player = sorted(self.players,key=lambda x:x.stack)[-1]
 
         log.info(league_table)
         log.info(f"Best Player: {best_player}")
@@ -559,10 +505,8 @@ class HoldemTable(Env):
             self.player_cycle.max_steps_total = len(self.players) * self.max_round_raising + 2
 
             self._next_player()
-            self.opp_info.small_blind = self.current_player.seat
             self._process_decision(Action.SMALL_BLIND)
             self._next_player()
-            self.opp_info.big_blind = self.current_player.seat
             self._process_decision(Action.BIG_BLIND)
             self._next_player()
 
@@ -793,13 +737,6 @@ class HoldemTable(Env):
                 pass
 
         self.viewer.update()
-
-    """def _get_oppinfo(self):
-        pos = self.current_player.seat
-        self.opp_info.recent_action[pos] = self.action
-        if self.stage in [Stage.END_HIDDEN, Stage.SHOWDOWN]:
-            self.opp_info.hand_cards = [player.cards for player in self.players]
-            self.opp_info.table_cards = self.table_cards"""
 
 
 class PlayerCycle:

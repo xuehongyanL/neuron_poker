@@ -11,6 +11,7 @@ from agents.agent_random import Player as RandomPlayer
 from agents.agent_AI import AI_Player as Custom_Lite
 from agents.agent_equity_ensemble import Player as Custom_Ensemble
 from agents.agent_equity_ensemble_ex import Player as Custom_Ensemble_EX
+from agents.agent_PRT_random import Player as PRT
 
 # 需要临时注释掉/gym_env/env.py中plt.show()语句
 # 以免每一场结束后弹出一个折线图表
@@ -18,20 +19,23 @@ from agents.agent_equity_ensemble_ex import Player as Custom_Ensemble_EX
 args = docopt(__doc__)
 epoch = int(args['--epoch'])
 
-init_players = [
-    # RandomPlayer(),
-    # RandomPlayer(),
-    # RandomPlayer(),
-    # Custom_Lite(),
-    # Custom_Lite(),
-    # Custom_Lite(),
-    Custom_Ensemble(),
-    Custom_Ensemble(),
-    Custom_Ensemble(),
-    Custom_Ensemble_EX(),
-    Custom_Ensemble_EX(),
-    Custom_Ensemble_EX(),
-]
+def init_players(env):
+    return [
+        # RandomPlayer(),
+        # RandomPlayer(),
+        # RandomPlayer(),
+        # Custom_Lite(),
+        # Custom_Lite(),
+        # Custom_Lite(),
+        Custom_Ensemble(),
+        Custom_Ensemble(),
+        # Custom_Ensemble(),
+        Custom_Ensemble_EX(),
+        Custom_Ensemble_EX(),
+        # Custom_Ensemble_EX(),
+        RandomPlayer(),
+        PRT(env=env),
+    ]
 players = deepcopy(init_players)
 leaderboard = {}
 
