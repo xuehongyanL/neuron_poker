@@ -108,12 +108,13 @@ class Runner:
 
         self.env.reset()
 
-    def bench_interface(self, player_pool_func):
+    def get_bench_env(self):
         env_name = 'neuron_poker-v0'
         stack = 500
-        num_of_plrs = 6
-        self.env = gym.make(env_name, initial_stacks=stack, render=self.render)
-        player_pool = player_pool_func(self.env)
+        return gym.make(env_name, initial_stacks=stack, render=self.render)
+
+    def bench_interface(self, env, player_pool):
+        self.env = env
         random.shuffle(player_pool)
         for player in player_pool:
             self.env.add_player(player)

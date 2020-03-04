@@ -7,13 +7,14 @@ from gym_env.env import Action, Stage
 
 
 class PRTNode(object):
-    def __init__(self, name, idx=0, stage=0, action=None, agent=2):
+    def __init__(self, name, idx=0, stage=0, action=None, agent=2, custom_name=''):
         self.name = name
         self.parent = None
         self.child = {}
         self.depth = 0
         self.agent = agent
         self.action = action
+        self.custom_name = custom_name
 
         self.stage = stage
         self.idx = idx
@@ -23,35 +24,33 @@ class PRTNode(object):
                            'fold_count': 0}
 
     def __repr__(self):
-        return 'PRT Node(%s)' % self.name
+        return f'PRT Node({self.name})'
 
     def __contains__(self, item):
         return item in self.child
 
     def __len__(self):
-        """return number of children node"""
         return len(self.child)
 
     def __bool__(self):
-        """always return True for exist node"""
         return True
 
     @property
     def path(self):
         """return path string (from root to current node)"""
         if self.parent:
-            return '%s %s' % (self.parent.path.strip(), self.name)
+            return f'{self.parent.path.strip()} {self.name})'
         else:
             return self.name
 
     """child"""
 
-    def get_child(self, name, defval=None):
+    def get_child(self, name, def_val=None):
         """get a child node of current node"""
-        return self.child.get(name, defval)
+        return self.child.get(name, def_val)
 
     def add_child(self, name, obj=None, stage=0, action=None, agent=0):
-        """add a child node tu current node"""
+        """add a child node to current node"""
         if obj and not isinstance(obj, PRTNode):
             raise ValueError('PRT_Node only add another PRT_Node obj as child')
         if obj is None:
@@ -59,6 +58,7 @@ class PRTNode(object):
         obj.parent = self
         obj.depth = self.depth + 1
         obj.idx = self.idx
+        obj.custom_name = self.custom_name
         self.child[name] = obj
         return obj
 
@@ -71,13 +71,12 @@ class PRTNode(object):
         # convert path to a list if input is a string
         path = path if isinstance(path, list) else path.split()
         cur = self
+        obj = None
         for sub in path:
             # search
             obj = cur.get_child(sub)
             if obj is None and creat:
-                # creat new node if need
                 obj = cur.add_child(sub)
-            # check if search done
             if obj is None:
                 break
             cur = obj
@@ -100,9 +99,9 @@ class PRTNode(object):
                 obj.dump(indent + 1)
 
     @property
-    def back_to_root(self):
+    def root(self):
         if self.parent:
-            return self.parent.back_to_root
+            return self.parent.root
         else:
             return self
 
@@ -122,15 +121,12 @@ class PRTNode(object):
     def fold_stat(self):
         self.node_stats['fold_count'] += 1
 
-    def get_stats(self):
-        return self.node_stats
-
 
 class CurrentData:
-    def __init__(self):
-        self.stage = 0
-        self.player = 0
-        self.action = None
+    def __init__(self, stage, player, action):
+        self.stage = stage
+        self.player = player
+        self.action = action
 
 
 class Result:
@@ -146,37 +142,10 @@ class Result:
 
 
 class StatEx:
-    def __init__(self):
-        self.fold_rate = 0
-        self.showdown_rate = 0
-        self.ex_strength = 0
-
-
-'''class Action(Enum):
-    """Allowed actions"""
-
-    FOLD = 0
-    CHECK = 1
-    CALL = 2
-    RAISE_3BB = 3
-    RAISE_HALF_POT = 3
-    RAISE_POT = 4
-    RAISE_2POT = 5
-    ALL_IN = 6
-    SMALL_BLIND = 7
-    BIG_BLIND = 8
-    
-
-class Stage(Enum):
-    """Allowed actions"""
-
-    PREFLOP = 0
-    FLOP = 1
-    TURN = 2
-    RIVER = 3
-    END_HIDDEN = 4
-    SHOWDOWN = 5
-'''
+    def __init__(self, fold_rate=0, showdown_rate=0, ex_strength=0):
+        self.fold_rate = fold_rate
+        self.showdown_rate = showdown_rate
+        self.ex_strength = ex_strength
 
 
 def prt_search(current_node, current_data):
@@ -195,8 +164,8 @@ def prt_search(current_node, current_data):
                 return current_node
 
     if n_next_node not in current_node.child:
-        current_node.add_child(name=n_next_node, stage=current_data.stage,
-                               action=current_data.action, agent=int(sim_player))
+        current_node.add_child(name=n_next_node, stage=current_data.stage, action=current_data.action,
+                               agent=int(sim_player))
 
     current_node = current_node.get_child(n_next_node)
     return current_node
@@ -222,7 +191,6 @@ if __name__ == '__main__':
     # local test
     print('test prt')
     PRT = []
-    current_data = CurrentData()
     for player in range(6):
         PRT.append(PRTNode(name='Opp' + str(player), idx=player))
     for _ in range(6):
@@ -230,14 +198,12 @@ if __name__ == '__main__':
         for Test_stage in range(4):
             for player in range(6):
                 R_action = random.choice(list(Action)[:7])
-                current_data.stage = Test_stage
-                current_data.player = player
-                current_data.action = R_action
+                current_data = CurrentData(Test_stage, player, R_action)
                 for i in range(6):
                     current_node[i] = prt_search(current_node[i], current_data)
             for i in range(6):
-                PRT[i] = PRT[i].back_to_root
+                PRT[i] = PRT[i].root
 
     for i in range(len(PRT)):
-        PRT[i] = PRT[i].back_to_root
+        PRT[i] = PRT[i].root
         PRT[i].dump()
